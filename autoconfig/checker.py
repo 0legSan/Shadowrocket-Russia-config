@@ -12,14 +12,26 @@ _semaphore = asyncio.Semaphore(MAX_CONCURRENT_CHECKS)
 
 # Паттерны в теле ответа, указывающие на геоблокировку
 BLOCK_INDICATORS = [
+    # Cloudflare / WAF
     'you have been blocked',
     'access denied',
     'blocked by',
+    # Геоблокировка
     'not available in your country',
     'not available in your region',
     'geo restriction',
     'this content is not available',
     'unavailable in your location',
+    # Санкционные блокировки
+    'sanctioned countries',
+    'restricted countries',
+    'access from your country',
+    'your region is restricted',
+    'service is not available in your',
+    'restricted in your country',
+    'not supported in your country',
+    'blocked in your region',
+    'embargo',
 ]
 
 
@@ -40,11 +52,13 @@ def _http_check_blocked(domain: str) -> bool:
 
     try:
         with urllib.request.urlopen(req, timeout=CHECK_TIMEOUT, context=ctx) as resp:
-            if resp.status == 403:
+            if resp.status in (403, 451):
                 body = resp.read(4096).decode('utf-8', errors='ignore').lower()
                 return any(ind in body for ind in BLOCK_INDICATORS)
             return False  # 200/301/302 — доступен
     except urllib.error.HTTPError as e:
+        if e.code == 451:
+            return True  # Unavailable For Legal Reasons — санкции
         if e.code == 403:
             body = e.read(4096).decode('utf-8', errors='ignore').lower()
             return any(ind in body for ind in BLOCK_INDICATORS)

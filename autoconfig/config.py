@@ -16,9 +16,9 @@ CONFIG_FILE = REPO_PATH / "shadsocks_in.conf"
 IGNORED_DOMAINS_FILE = Path(os.path.dirname(os.path.abspath(__file__))) / "ignored_domains.txt"
 
 # TCP-проверка доступности
-CHECK_TIMEOUT = 3  # секунды
+CHECK_TIMEOUT = 2  # секунды (если за 2с нет ответа — заблокирован)
 CHECK_PORT = 443
-MAX_CONCURRENT_CHECKS = 5
+MAX_CONCURRENT_CHECKS = 10
 
 # Российские TLD — идут DIRECT, не проверяем
 DIRECT_TLDS = {
